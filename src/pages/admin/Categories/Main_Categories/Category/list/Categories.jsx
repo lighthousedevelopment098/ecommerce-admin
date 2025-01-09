@@ -20,7 +20,11 @@ import {
 	fetchCategories,
 } from "../../../../../../redux/slices/admin/categorySlice";
 import ConfirmationModal from "../../../../../../components/FormInput/ConfirmationModal";
-import { getUploadUrl, uploadImageToS3 } from "../../../../../../utils/helpers";
+import {
+	getUploadUrl,
+	optimizeImageAndUpload,
+	uploadImageToS3,
+} from "../../../../../../utils/helpers";
 import LoadingSpinner from "../../../../../../components/LoodingSpinner/LoadingSpinner";
 
 const Categories = () => {
@@ -34,7 +38,6 @@ const Categories = () => {
 		priority: "",
 		logo: "",
 		traxCategoryId: "",
-		
 	});
 
 	const [searchQuery, setSearchQuery] = useState("");
@@ -65,7 +68,8 @@ const Categories = () => {
 
 	async function uploadImage(uploadConfig, file) {
 		try {
-			await uploadImageToS3(uploadConfig.url, file);
+			// await uploadImageToS3(uploadConfig.url, file);
+			await optimizeImageAndUpload(uploadConfig.url, file);
 			return uploadConfig.key; // Return the key if successful
 		} catch (error) {
 			console.error(`Failed to upload ${file.name}:`, error);
@@ -81,13 +85,12 @@ const Categories = () => {
 		setNewCategory({ ...newCategory, logo: logoString });
 	};
 
-
 	const handleFormSubmit = async (e) => {
 		e.preventDefault();
-	
+
 		const uploadConfig = await getUploadUrl(selectedFile.type, "category");
 		const imageKey = await uploadImage(uploadConfig, selectedFile);
-	
+
 		if (!imageKey) {
 			toast.error("Image upload failed, please try again.");
 			return; // Prevent further form submission if image upload fails
@@ -98,9 +101,8 @@ const Categories = () => {
 			priority: newCategory.priority,
 			logo: imageKey,
 			// shippingCategoryId: newCategory.traxCategoryId,
-            
 		};
-	      console.log("form data =====", formData)
+		console.log("form data =====", formData);
 		try {
 			const { token } = getAuthData(); // Use getAuthData to retrieve token
 			const response = await fetch(API_URL, {
@@ -111,12 +113,12 @@ const Categories = () => {
 				},
 				body: JSON.stringify(formData),
 			});
-	
+
 			if (!response.ok) {
 				const responseData = await response.json();
 				throw new Error(responseData.message || "Failed to add category");
 			}
-	
+
 			toast.success(`Category "${newCategory.name}" added successfully`);
 			startTransition(() => {
 				dispatch(fetchCategories({})); // Refresh categories after adding
@@ -128,7 +130,7 @@ const Categories = () => {
 			console.error(error); // Log the full error for debugging
 		}
 	};
-	
+
 	const handleDeleteCategory = async (categoryId) => {
 		const confirmed = await ConfirmationModal({
 			title: "Are you sure?",
@@ -177,7 +179,13 @@ const Categories = () => {
 			</h2>
 			{error && <div className="alert alert-danger">{error}</div>}
 
-			<Suspense fallback={<div><LoadingSpinner /></div>}>
+			<Suspense
+				fallback={
+					<div>
+						<LoadingSpinner />
+					</div>
+				}
+			>
 				<CategoryForm
 					selectedLang={selectedLang}
 					newCategory={newCategory}

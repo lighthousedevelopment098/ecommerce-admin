@@ -8,7 +8,7 @@ import PreviewImage from "../../../../components/FormInput/PreviewImage";
 import FileUpload from "../../../../components/FormInput/FileUpload";
 import apiConfig from "../../../../config/apiConfig";
 import { getAuthData } from "../../../../utils/authHelper";
-import { getUploadUrl, uploadImageToS3 } from "../../../../utils/helpers";
+import { getUploadUrl, optimizeImageAndUpload, uploadImageToS3 } from "../../../../utils/helpers";
 import Uploading from "../../../../components/LoodingSpinner/Uploading";
 
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -84,7 +84,9 @@ const AddBannerForm = () => {
 
   async function uploadImage(uploadConfig, file) {
     try {
-      await uploadImageToS3(uploadConfig.url, file);
+      // await uploadImageToS3(uploadConfig.url, file);
+      await optimizeImageAndUpload(uploadConfig.url, file);
+      
       return uploadConfig.key;
     } catch (error) {
       console.error("Failed to upload:", error);
